@@ -1,0 +1,20 @@
+version: "3.9"
+
+services:
+  tufiesta:
+    image: nginx:alpine
+    container_name: tufiesta-muleto
+    restart: always
+    volumes:
+      - ./index.html:/usr/share/nginx/html/index.html:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.tufiesta.rule=Host(`www.tufiestaonline.com.ar`)"
+      - "traefik.http.routers.tufiesta.entrypoints=websecure"
+      - "traefik.http.routers.tufiesta.tls.certresolver=letsencrypt"
+    networks:
+      - traefik-network
+
+networks:
+  traefik-network:
+    external: true

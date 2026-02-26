@@ -1,0 +1,20 @@
+version: "3.9"
+
+services:
+  finances:
+    image: nginx:alpine
+    container_name: finances-muleto
+    restart: always
+    volumes:
+      - ./index.html:/usr/share/nginx/html/index.html:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.finances.rule=Host(`finances.raizdigital.com.ar`)"
+      - "traefik.http.routers.finances.entrypoints=websecure"
+      - "traefik.http.routers.finances.tls.certresolver=letsencrypt"
+    networks:
+      - traefik-network
+
+networks:
+  traefik-network:
+    external: true

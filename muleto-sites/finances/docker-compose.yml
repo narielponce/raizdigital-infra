@@ -12,6 +12,7 @@ services:
       - "traefik.http.routers.finances.rule=Host(`finances.raizdigital.com.ar`)"
       - "traefik.http.routers.finances.entrypoints=websecure"
       - "traefik.http.routers.finances.tls.certresolver=letsencrypt"
+      - "traefik.http.services.finances.loadbalancer.server.port=80"
     networks:
       - traefik-network
 

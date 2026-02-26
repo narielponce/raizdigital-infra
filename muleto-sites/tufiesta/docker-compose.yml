@@ -9,7 +9,7 @@ services:
       - ./index.html:/usr/share/nginx/html/index.html:ro
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.tufiesta.rule=Host(`www.tufiestaonline.com.ar`)"
+      - "traefik.http.routers.tufiesta.rule=Host(`tufiestaonline.com.ar`) || Host(`www.tufiestaonline.com.ar`)"
       - "traefik.http.routers.tufiesta.entrypoints=websecure"
       - "traefik.http.routers.tufiesta.tls.certresolver=letsencrypt"
       - "traefik.http.services.tufiesta.loadbalancer.server.port=80"

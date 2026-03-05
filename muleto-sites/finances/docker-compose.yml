@@ -1,21 +1,57 @@
 version: "3.9"
 
 services:
-  finances:
-    image: nginx:alpine
-    container_name: finances-muleto
+
+  frontend:
+    image: ghcr.io/narielponce/expenses-frontend:1.0.0
+    container_name: finances_frontend
     restart: always
-    volumes:
-      - ./index.html:/usr/share/nginx/html/index.html:ro
+    expose:
+      - "80"
+    networks:
+      - traefik-network
+      - internal
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.finances.rule=Host(`finances.raizdigital.com.ar`)"
       - "traefik.http.routers.finances.entrypoints=websecure"
       - "traefik.http.routers.finances.tls.certresolver=letsencrypt"
       - "traefik.http.services.finances.loadbalancer.server.port=80"
+
+  backend:
+    image: ghcr.io/narielponce/expenses-backend:1.0.0
+    container_name: finances_backend
+    restart: always
+    expose:
+      - "8000"
+    env_file:
+      - .env
     networks:
+      - internal
       - traefik-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.finances-api.rule=Host(`finances.raizdigital.com.ar`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.finances-api.entrypoints=websecure"
+      - "traefik.http.routers.finances-api.tls.certresolver=letsencrypt"
+      - "traefik.http.services.finances-api.loadbalancer.server.port=8000"
+
+  db:
+    image: postgres:15-alpine
+    container_name: finances_db
+    restart: always
+    env_file:
+      - .env
+    volumes:
+      - finances_pgdata:/var/lib/postgresql/data
+    networks:
+      - internal
+
+volumes:
+  finances_pgdata:
 
 networks:
   traefik-network:
     external: true
+  internal:
+    driver: bridge

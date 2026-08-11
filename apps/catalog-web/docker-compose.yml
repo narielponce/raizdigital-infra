@@ -1,0 +1,58 @@
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: catalogo_db
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-catalogo_db}
+      POSTGRES_HOST_AUTH_METHOD: trust 
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    image: ghcr.io/narielponce/catalogo-web-backend:latest
+    container_name: catalogo_backend
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./uploads:/app/uploads
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-catalogo_db}
+      - JWT_SECRET=${JWT_SECRET:-your-super-secret-key}
+      - N8N_SECRET=${N8N_SECRET:-your-super-secret-n8n-key}
+      - MP_ACCESS_TOKEN=${MP_ACCESS_TOKEN}
+
+  frontend:
+    image: ghcr.io/narielponce/catalogo-web-frontend:latest
+    container_name: catalogo_frontend
+    restart: always
+    depends_on:
+      - backend
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.catalog-web.rule=Host(`catalog.raizdigital.com.ar`) || Host(`tupedido.ar`) || Host(`www.tupedido.ar`)"
+      - "traefik.http.routers.catalog-web.entrypoints=websecure"
+      - "traefik.http.routers.catalog-web.tls=true"
+      - "traefik.http.routers.catalog-web.tls.certresolver=letsencrypt"
+      - "traefik.http.services.catalog-web.loadbalancer.server.port=80"
+      - "traefik.docker.network=traefik-network"
+
+    networks:
+      - default
+      - traefik-network
+
+volumes:
+  postgres_data:
+
+networks:
+  traefik-network:
+    external: true
